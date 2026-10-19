@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Error - Sistema de Aprendizaje Zend MVC</title>
+    <link rel="stylesheet" href="<?php echo $this->baseUrl('/css/estilos.css'); ?>">
+</head>
+<body>
+<div class="contenedor-principal">
+    <h1 style="color:#c62828;">⚠️ Error en la Solicitud</h1>
+    <h2><?php echo $this->escape($this->message); ?></h2>
+
+    <?php if (isset($this->exception) && APPLICATION_ENV != 'production'): ?>
+    <div style="background:#fff3cd; border:1px solid #ffeeba; padding:15px; border-radius:6px; margin:20px 0;">
+        <h3>Detalles de la excepción (Modo Desarrollo):</h3>
+        <p><strong>Mensaje:</strong> <?php echo $this->escape($this->exception->getMessage()); ?></p>
+        <pre style="background:#212529; color:#f8f9fa; padding:15px; border-radius:4px; overflow:auto;"><?php echo $this->escape($this->exception->getTraceAsString()); ?></pre>
+    </div>
+    <?php endif; ?>
+
+    <p><a href="<?php echo $this->baseUrl('/correo-institucional/solicitud/index'); ?>" class="enlace-nav activo">Volver al inicio del módulo</a></p>
+</div>
+</body>
+</html>
+

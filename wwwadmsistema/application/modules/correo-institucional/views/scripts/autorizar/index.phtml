@@ -1,0 +1,148 @@
+<?php
+/**
+ * ============================================================
+ * VISTA: Panel de Autorización y Gestión de Solicitudes
+ * ============================================================
+ * Archivo: application/modules/correo-institucional/views/scripts/autorizar/index.phtml
+ * Controlador: AutorizarController -> indexAction()
+ *
+ * Variables disponibles:
+ *   $this->pendientes       -> Rowset con solicitudes en estado 'pendiente'
+ *   $this->aprobadas        -> Rowset con solicitudes en estado 'aprobada'
+ *   $this->rechazadas       -> Rowset con solicitudes en estado 'rechazada'
+ *   $this->totalPendientes  -> Total numérico de pendientes
+ *   $this->totalAprobadas   -> Total numérico de aprobadas
+ *   $this->totalRechazadas  -> Total numérico de rechazadas
+ */
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Autorización - Aprendizaje MVC</title>
+    <link rel="stylesheet" href="<?php echo $this->baseUrl('/css/estilos.css'); ?>">
+</head>
+<body>
+<div class="contenedor-principal">
+    <header class="encabezado-modulo">
+        <h1>🔐 Panel de Autorización de Correos (APRENDIZAJE_MVC)</h1>
+        <p class="subtitulo">Flujo demostrado: <code>autorizar/index.js</code> ➔ <code>AutorizarController.php</code> ➔ <code>exportarExcelAction()</code> / <code>aprobarAction()</code></p>
+    </header>
+
+    <!-- Resumen Superior de Estados -->
+    <section class="tarjetas-resumen">
+        <div class="tarjeta tarjeta-pendiente">
+            <h3>⏳ Pendientes</h3>
+            <span class="valor-metrica"><?php echo (int)$this->totalPendientes; ?></span>
+        </div>
+        <div class="tarjeta tarjeta-aprobada">
+            <h3>✅ Aprobadas</h3>
+            <span class="valor-metrica"><?php echo (int)$this->totalAprobadas; ?></span>
+        </div>
+        <div class="tarjeta tarjeta-rechazada">
+            <h3>❌ Rechazadas</h3>
+            <span class="valor-metrica"><?php echo (int)$this->totalRechazadas; ?></span>
+        </div>
+    </section>
+
+    <!-- Navegación y Acciones Globales -->
+    <div class="barra-acciones">
+        <nav class="barra-navegacion">
+            <a href="<?php echo $this->url(array('module'=>'correo-institucional', 'controller'=>'solicitud', 'action'=>'index'), 'default', true); ?>" class="enlace-nav">Formulario Solicitud</a>
+            <a href="<?php echo $this->url(array('module'=>'correo-institucional', 'controller'=>'autorizar', 'action'=>'index'), 'default', true); ?>" class="enlace-nav activo">Módulo Autorización</a>
+        </nav>
+        <div class="acciones-derecha">
+            <!-- BOTÓN ÚNICO CON ID: #btnExportarExcel -->
+            <button type="button" id="btnExportarExcel" class="boton-excel" style="border:none; cursor:pointer;">
+                📊 #btnExportarExcel
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtro Asíncrono con JavaScript -->
+    <section class="seccion-filtro">
+        <label for="filtroEstado"><strong>Filtrar vista por estado (con <code>$(document).on('change', '#filtroEstado')</code>):</strong></label>
+        <select id="filtroEstado" class="select-filtro">
+            <option value="pendiente" selected>Solicitudes Pendientes</option>
+            <option value="aprobada">Solicitudes Aprobadas</option>
+            <option value="rechazada">Solicitudes Rechazadas</option>
+        </select>
+        <span id="indicador-carga-ajax" style="display:none; margin-left:10px; color:#0056b3; font-weight:bold;">Cargando solicitudes...</span>
+    </section>
+
+    <!-- Tabla Principal de Solicitudes y Acciones -->
+    <section class="seccion-listado">
+        <h2>Solicitudes Pendientes de Revisión</h2>
+        <table class="tabla-datos" id="tabla-autorizar-DEMO">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>RUT</th>
+                    <th>Nombre Solicitante</th>
+                    <th>Tipo Contrato</th>
+                    <th>Correo Propuesto</th>
+                    <th>Acciones (.btnAprobarSolicitud / .btnRechazarSolicitud)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (isset($this->pendientes) && count($this->pendientes) > 0): ?>
+                    <?php foreach ($this->pendientes as $sol): ?>
+                    <tr id="fila-solicitud-<?php echo $sol->id_solicitud; ?>">
+                        <td><strong>#<?php echo $this->escape($sol->id_solicitud); ?></strong></td>
+                        <td><code><?php echo $this->escape($sol->rut_solicitante); ?></code></td>
+                        <td><?php echo $this->escape($sol->nombre_solicitante); ?></td>
+                        <td><span class="etiqueta-contrato"><?php echo $this->escape($sol->tipo_contrato); ?></span></td>
+                        <td><span class="correo-texto"><?php echo $this->escape($sol->correo_sugerido); ?></span></td>
+                        <td class="columna-acciones">
+                            <!-- BOTÓN REPETIDO: Usa CLASE (.btnAprobarSolicitud) y data-id -->
+                            <button type="button" class="btnAprobarSolicitud boton-accion boton-aprobar"
+                                    data-id="<?php echo (int)$sol->id_solicitud; ?>"
+                                    data-nombre="<?php echo $this->escape($sol->nombre_solicitante); ?>">
+                                ✅ .btnAprobarSolicitud
+                            </button>
+
+                            <!-- BOTÓN REPETIDO: Usa CLASE (.btnRechazarSolicitud) y data-id -->
+                            <button type="button" class="btnRechazarSolicitud boton-accion boton-rechazar"
+                                    data-id="<?php echo (int)$sol->id_solicitud; ?>"
+                                    data-nombre="<?php echo $this->escape($sol->nombre_solicitante); ?>">
+                                ❌ .btnRechazarSolicitud
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="6" class="mensaje-vacio">No hay solicitudes pendientes en este momento.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<!-- Modal para ingresar motivo de rechazo (utilizado por .btnRechazarSolicitud) -->
+<div id="modalRechazo" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:25px; border-radius:8px; max-width:450px; width:90%; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+        <h3 style="margin-top:0; color:#dc3545;">❌ Rechazar Solicitud #<span id="rechazoIdSolicitud"></span></h3>
+        <p>Funcionario: <strong id="rechazoNombreFuncionario"></strong></p>
+        <div style="margin:15px 0;">
+            <label for="motivoRechazoTexto"><strong>Motivo de rechazo_TEST:</strong></label>
+            <input type="text" id="motivoRechazoTexto" class="input-motivo" style="width:100%; margin-top:5px; box-sizing:border-box; padding:8px;" placeholder="Ej: Falta firma de convenio_TEST">
+        </div>
+        <div style="text-align:right; gap:10px; display:flex; justify-content:flex-end;">
+            <button type="button" id="btnCancelarRechazo" class="boton-accion" style="background:#6c757d;">Cancelar</button>
+            <button type="button" id="btnConfirmarRechazo" class="boton-accion boton-rechazar">Confirmar Rechazo</button>
+        </div>
+    </div>
+</div>
+
+<!-- Carga de jQuery local -->
+<script src="<?php echo $this->baseUrl('/js/jquery.min.js'); ?>"></script>
+
+<script>
+    var BASE_URL_MODULO = '<?php echo $this->url(array("module" => "correo-institucional"), "default", true); ?>';
+</script>
+<script src="<?php echo $this->baseUrl('/js-views/correo-institucional/autorizar/index.js'); ?>"></script>
+</body>
+</html>
+

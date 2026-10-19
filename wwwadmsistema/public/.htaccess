@@ -1,0 +1,16 @@
+# ============================================================
+# .htaccess — Reglas de reescritura para el Front Controller
+# ============================================================
+# Propósito:
+# Cualquier solicitud de recurso que NO corresponda a un archivo
+# existente (-s), enlace (-l) o directorio físico (-d) (por ejemplo: CSS,
+# JS, imágenes) se redirige internamente a index.php manteniendo
+# los parámetros en la URI para que el Router de Zend los procese.
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -s [OR]
+RewriteCond %{REQUEST_FILENAME} -l [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^.*$ - [NC,L]
+RewriteRule ^.*$ index.php [NC,L]
+

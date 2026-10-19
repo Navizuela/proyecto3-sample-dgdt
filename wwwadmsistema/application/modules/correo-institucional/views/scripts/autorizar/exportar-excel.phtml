@@ -1,0 +1,57 @@
+<?php
+/**
+ * ============================================================
+ * VISTA: Exportación de Solicitudes a Excel / CSV
+ * ============================================================
+ * Archivo: application/modules/correo-institucional/views/scripts/autorizar/exportar-excel.phtml
+ * Controlador: AutorizarController -> exportarExcelAction()
+ *
+ * CONCEPTO CLAVE:
+ * Esta vista no renderiza interfaz HTML; configura las cabeceras HTTP
+ * de respuesta para provocar la descarga inmediata en el navegador de un
+ * archivo CSV compatible de forma nativa con Microsoft Excel y LibreOffice Calc.
+ */
+
+// 1. Cabeceras HTTP para forzar descarga como archivo adjunto
+header('Content-Type: text/csv; charset=UTF-8');
+header('Content-Disposition: attachment; filename="solicitudes_correo_DEMO_' . date('Ymd_His') . '.csv"');
+header('Pragma: no-cache');
+header('Expires: 0');
+
+// 2. Inserción del Byte Order Mark (BOM) UTF-8 para garantizar que Excel reconozca tildes y caracteres especiales
+echo "\xEF\xBB\xBF";
+
+// 3. Fila de encabezados de columnas
+$columnas = array(
+    'ID_SOLICITUD',
+    'RUT',
+    'NOMBRE_SOLICITANTE',
+    'TIPO_CONTRATO',
+    'DOMINIO',
+    'CORREO_SUGERIDO',
+    'ESTADO',
+    'FECHA_SOLICITUD',
+    'FECHA_RESOLUCION',
+    'OBSERVACIONES'
+);
+echo implode(';', $columnas) . "\r\n";
+
+// 4. Filas de datos provenientes del controlador ($this->solicitudes)
+if (isset($this->solicitudes) && count($this->solicitudes) > 0) {
+    foreach ($this->solicitudes as $sol) {
+        $fila = array(
+            $sol->id_solicitud,
+            $sol->rut_solicitante,
+            '"' . str_replace('"', '""', $sol->nombre_solicitante) . '"',
+            $sol->tipo_contrato,
+            $sol->dominio_sugerido,
+            $sol->correo_sugerido,
+            $sol->estado_solicitud,
+            $sol->fecha_solicitud,
+            ($sol->fecha_resolucion ? $sol->fecha_resolucion : 'PENDIENTE'),
+            '"' . str_replace('"', '""', ($sol->observaciones ? $sol->observaciones : 'N/A')) . '"'
+        );
+        echo implode(';', $fila) . "\r\n";
+    }
+}
+

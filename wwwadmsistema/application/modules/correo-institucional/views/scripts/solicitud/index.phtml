@@ -1,0 +1,201 @@
+<?php
+/**
+ * ============================================================
+ * VISTA: Formulario de Solicitud y Listado Principal
+ * ============================================================
+ * Archivo: application/modules/correo-institucional/views/scripts/solicitud/index.phtml
+ * Controlador: SolicitudController -> indexAction()
+ *
+ * Variables inyectadas por el controlador:
+ *   $this->solicitudes      -> Zend_Db_Table_Rowset con registros de solicitudes
+ *   $this->totalPendientes  -> Cantidad numérica de solicitudes pendientes
+ *   $this->totalAprobadas   -> Cantidad numérica de solicitudes aprobadas
+ *   $this->totalRechazadas  -> Cantidad numérica de solicitudes rechazadas
+ */
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Solicitud de Correo Institucional - Aprendizaje MVC</title>
+    <link rel="stylesheet" href="<?php echo $this->baseUrl('/css/estilos.css'); ?>">
+</head>
+<body>
+<div class="contenedor-principal">
+    <header class="encabezado-modulo">
+        <h1>📧 Sistema de Gestión de Correos — Módulo Solicitud (APRENDIZAJE_MVC)</h1>
+        <p class="subtitulo">Flujo demostrado: <code>solicitud/index.js</code> ➔ <code>SolicitudController.php</code> ➔ <code>Solicitudes.php</code> ➔ <code>index.phtml</code></p>
+    </header>
+
+    <!-- Mini Dashboard con Métricas Dinámicas -->
+    <section class="tarjetas-resumen">
+        <div class="tarjeta tarjeta-pendiente">
+            <h3>⏳ Pendientes</h3>
+            <span class="valor-metrica" id="contador-pendientes"><?php echo (int)$this->totalPendientes; ?></span>
+        </div>
+        <div class="tarjeta tarjeta-aprobada">
+            <h3>✅ Aprobadas</h3>
+            <span class="valor-metrica"><?php echo (int)$this->totalAprobadas; ?></span>
+        </div>
+        <div class="tarjeta tarjeta-rechazada">
+            <h3>❌ Rechazadas</h3>
+            <span class="valor-metrica"><?php echo (int)$this->totalRechazadas; ?></span>
+        </div>
+    </section>
+
+    <!-- Navegación entre controladores del módulo -->
+    <nav class="barra-navegacion">
+        <a href="<?php echo $this->url(array('module'=>'correo-institucional', 'controller'=>'solicitud', 'action'=>'index'), 'default', true); ?>" class="enlace-nav activo">Formulario Solicitud</a>
+        <a href="<?php echo $this->url(array('module'=>'correo-institucional', 'controller'=>'autorizar', 'action'=>'index'), 'default', true); ?>" class="enlace-nav">Módulo Autorización</a>
+    </nav>
+
+    <!-- Formulario de Creación de Solicitud -->
+    <section class="seccion-formulario">
+        <h2>➕ Nueva Solicitud de Correo Institucional</h2>
+        <form method="post"
+              action="<?php echo $this->url(array('module'=>'correo-institucional', 'controller'=>'solicitud', 'action'=>'guardar'), 'default', true); ?>"
+              id="formulario-solicitud-DEMO" class="formulario-estilizado">
+
+            <div class="fila-formulario">
+                <div class="grupo-campo">
+                    <label for="rut_solicitante">RUT Solicitante (ficticio):</label>
+                    <input type="text" id="rut_solicitante" name="rut_solicitante"
+                           placeholder="Ej: 11111111-1" required>
+                </div>
+                <div class="grupo-campo">
+                    <label for="nombre_solicitante">Nombre Completo:</label>
+                    <input type="text" id="nombre_solicitante" name="nombre_solicitante"
+                           placeholder="Ej: Juan_TEST Pérez_DEMO" required>
+                </div>
+            </div>
+
+            <div class="fila-formulario">
+                <div class="grupo-campo">
+                    <label for="tipo_contrato">Tipo de Contrato:</label>
+                    <select id="tipo_contrato" name="tipo_contrato" required>
+                        <option value="">-- Seleccionar tipo --</option>
+                        <option value="planta">Planta (Académico/Gestión)</option>
+                        <option value="contrata">Contrata</option>
+                        <option value="honorarios">Honorarios (Docente hora)</option>
+                    </select>
+                </div>
+                <div class="grupo-campo">
+                    <label for="dominio_sugerido">Dominio Institucional:</label>
+                    <select id="select-dominio-DEMO" name="dominio_sugerido" required>
+                        <option value="">-- Seleccionar dominio --</option>
+                        <option value="academicos">@academicos (Planta/Contrata)</option>
+                        <option value="gestion">@gestion (Honorarios/Funcionarios)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botón con ID ÚNICO (#registroSugerir) según patrón institucional -->
+            <div class="fila-formulario" style="align-items:flex-end;">
+                <div class="grupo-campo" style="flex:1;">
+                    <label for="correo_sugerido_input">Correo Propuesto (Generado con #registroSugerir):</label>
+                    <input type="text" id="correo_sugerido_input" name="correo_sugerido"
+                           placeholder="Haz clic en 'Sugerir Correo' o se generará automáticamente"
+                           style="background:#f1f3f5; font-family:monospace;">
+                </div>
+                <div style="margin-bottom:15px;">
+                    <button type="button" id="registroSugerir" class="boton-accion" style="background:#6c757d; padding:10px 16px;">
+                        💡 #registroSugerir
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="btnGuardarSolicitud" class="boton-primario">💾 Enviar Solicitud (#btnGuardarSolicitud)</button>
+        </form>
+    </section>
+
+    <!-- Buscador AJAX con index.js usando botón con ID (#btnBuscarRut) -->
+    <section class="seccion-busqueda">
+        <h2>🔍 Búsqueda Asíncrona (AJAX con <code>solicitud/index.js</code>)</h2>
+        <p>Búsqueda vinculada con <code>$(document).on('click', '#btnBuscarRut', ...)</code> o al teclear:</p>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="campo-busqueda-rut-DEMO"
+                   placeholder="Escribe un RUT... ej: 11111111 o 22222" class="input-busqueda" style="flex:1;">
+            <button type="button" id="btnBuscarRut" class="boton-primario" style="padding:0 20px;">
+                🔍 #btnBuscarRut
+            </button>
+        </div>
+        <div id="resultados-busqueda-DEMO" class="contenedor-resultados"></div>
+    </section>
+
+    <!-- Tabla de Solicitudes Registradas con botones repetidos (.btnVerSolicitud) -->
+    <section class="seccion-listado">
+        <h2>📋 Solicitudes Registradas en la Base de Datos</h2>
+        <table class="tabla-datos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>RUT</th>
+                    <th>Nombre Solicitante</th>
+                    <th>Tipo Contrato</th>
+                    <th>Correo Sugerido</th>
+                    <th>Estado</th>
+                    <th>Acción (.btnVerSolicitud)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (isset($this->solicitudes) && count($this->solicitudes) > 0): ?>
+                    <?php foreach ($this->solicitudes as $sol): ?>
+                    <tr>
+                        <td><strong>#<?php echo $this->escape($sol->id_solicitud); ?></strong></td>
+                        <td><code><?php echo $this->escape($sol->rut_solicitante); ?></code></td>
+                        <td><?php echo $this->escape($sol->nombre_solicitante); ?></td>
+                        <td><span class="etiqueta-contrato"><?php echo $this->escape($sol->tipo_contrato); ?></span></td>
+                        <td><span class="correo-texto"><?php echo $this->escape($sol->correo_sugerido); ?></span></td>
+                        <td>
+                            <span class="estado estado-<?php echo htmlspecialchars($sol->estado_solicitud); ?>">
+                                <?php echo $this->escape($sol->estado_solicitud); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <!-- BOTÓN REPETIDO EN LA LISTA: Usa CLASE (.btnVerSolicitud) y atributos data-* -->
+                            <button type="button" class="btnVerSolicitud boton-accion"
+                                    style="background:#17a2b8;"
+                                    data-id="<?php echo $sol->id_solicitud; ?>"
+                                    data-rut="<?php echo $this->escape($sol->rut_solicitante); ?>"
+                                    data-nombre="<?php echo $this->escape($sol->nombre_solicitante); ?>"
+                                    data-correo="<?php echo $this->escape($sol->correo_sugerido); ?>">
+                                👁️ .btnVerSolicitud
+                            </button>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="7" class="mensaje-vacio">No existen registros en solicitudes_correo.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<!-- Modal didáctico para mostrar el detalle al hacer clic en .btnVerSolicitud -->
+<div id="modalDetalleSolicitud" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:25px; border-radius:8px; max-width:450px; width:90%; box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+        <h3 style="margin-top:0;">📄 Detalle de Solicitud (capturado por <code>.btnVerSolicitud</code>)</h3>
+        <p><strong>ID:</strong> <span id="modalId"></span></p>
+        <p><strong>RUT:</strong> <span id="modalRut"></span></p>
+        <p><strong>Nombre:</strong> <span id="modalNombre"></span></p>
+        <p><strong>Correo Propuesto:</strong> <span id="modalCorreo" style="color:#0d6efd; font-family:monospace;"></span></p>
+        <div style="text-align:right; margin-top:20px;">
+            <button type="button" id="btnCerrarModal" class="boton-accion" style="background:#6c757d;">Cerrar (#btnCerrarModal)</button>
+        </div>
+    </div>
+</div>
+
+<!-- Carga de jQuery local -->
+<script src="<?php echo $this->baseUrl('/js/jquery.min.js'); ?>"></script>
+
+<!-- Comunicación de contexto al script JavaScript del frontend -->
+<script>
+    var BASE_URL_MODULO = '<?php echo $this->url(array("module" => "correo-institucional"), "default", true); ?>';
+</script>
+<script src="<?php echo $this->baseUrl('/js-views/correo-institucional/solicitud/index.js'); ?>"></script>
+</body>
+</html>
+
