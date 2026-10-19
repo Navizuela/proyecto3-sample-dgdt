@@ -16,3 +16,7 @@ $RECYCLE.BIN/
 # Logs
 *.log
 
+# Documentos e informes privados
+*.docx
+Informes - Proyecto 3.docx
+informes_texto.txt
